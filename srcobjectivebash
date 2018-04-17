@@ -1,0 +1,30 @@
+#########################################################
+# Include this function in bash script
+#   to use psuedo-objective-bash
+function objectifycode() {
+
+  objs=($(awk '/^\s*createobject/{print $2}' $0))
+  out=$(cat $0)
+  for x in ${!objs[@]}; do
+    out=$(echo "$out" | sed '/createobject\s\+'${objs[$x]}'$/ideclare -A '${objs[$x]})
+    out=$(echo "$out" | sed '/createobject\s\+'${objs[$x]}'$/s@createobject@_constructor@')
+    # obj.func
+    out=$(echo "$out" | sed '/'${objs[$x]}'\.[a-zA-Z0-9]\+\s*$/s@'${objs[$x]}'\.\([a-zA-Z0-9]\+\)@${'${objs[$x]}'[\1]}@g')
+    # obj.func=
+    out=$(echo "$out" | sed '/'${objs[$x]}'\.[a-zA-Z0-9]\+\s*=/s@\('${objs[$x]}'\)\.\([a-zA-Z0-9]\+\)\s*=\s*\(.*\)@\1[\2]=\3@g')
+    # things like while [ obj.val -lt 3 ]; ...
+    out=$(echo "$out" | sed '/'${objs[$x]}'\.[a-zA-Z0-9]\+/s@\('${objs[$x]}'\)\.\([a-zA-Z0-9]\+\)@${\1[\2]}@g')
+  done
+  out=$(echo "$out" | sed -e '/function\s\+objectifycode(/,/^}$/d'\
+                          -e '/^\s*objectifycode\s*$/d')
+  # Remove the line that sources this file
+  out=$(echo "$out" | sed -e '/^\s*\(\.\|source\)\s*srcobjectivebash/d')
+  #echo "$out"
+  eval "$out"
+  exit
+}
+function _constructor() {
+ :
+}
+objectifycode
+#########################################################

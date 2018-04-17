@@ -1,0 +1,75 @@
+#! /usr/bin/bash
+
+# Set defaults
+debug=0;
+evaluate=0;
+translate=0;
+
+for x in $@; do
+case "$x" in
+  -d)
+    debug=1;
+    shift;
+    ;;
+
+  -t) 
+    translate=1;
+    shift;
+    ;;
+
+  -e)
+    evaluate=1;
+    shift;
+    ;;
+  *)
+    filename="$x"
+    ;;
+esac
+
+done
+
+# Pull out function definitions
+funcs=$( sed -n -e '/^ *|[^|]\+| *$/,/^ *|| *$/{H}' -e '${x;p}' ${filename})
+
+# Pull out rest of code
+main=$( sed -n -e '/^ *|[^|]\+| *$/,/^ *|| *$/!{H}' -e '${x;p}' ${filename})
+
+# Combine the two with definitions first
+code="${funcs}${main}"
+
+
+# Translate
+code=$(echo "${code}" |\
+            sed  -e 's/^ *-- *$/else/'\
+            -e 's/^ *<> *$/fi;/'\
+            -e 's/^ *<\(.*\)> */if [ \1 ]; then/'\
+            -e 's/^ *>\(.*\)< *$/elif [ \1 ]; then/'\
+            -e 's#^ *\*\([^\*]\+\)\* *$#while [ \1 ]; do#'\
+            -e 's#^ *\*\* *$#done;#'\
+            -e '/^ *#{ *$/,/^ *#} *$/d'\
+            -e 's/^ *|\([^|]\+\)| *$/function \1 () {/'\
+      )
+code=$(echo "${code}" |\
+        sed -e 's# \+\(=\) \+#\1#g'\
+            -e 's#^ *|| *$#}#'\
+            -e 's#^ *:\([^:]\+\): *$#case \1 in#'\
+            -e 's#^ *:: *$#esac#'
+      )
+
+# Print out interpreted code if desired
+if [ ${debug} -eq 1 ]; then 
+  echo "######## BEGIN CODE ##########"
+  echo "${code}" | cat -n -
+  echo "######### END CODE ###########"
+fi
+
+# Print translaton to stdout 
+if [ ${translate} -eq 1 ]; then 
+  echo "#!$(which bash)"
+  echo "${code}" | cat - ;
+fi
+
+# Evaluate the code
+if  [ ${evaluate} -eq 1 ]; then
+  eval "${code}"
+fi

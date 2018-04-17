@@ -1,0 +1,32 @@
+. srcobjectivebash 
+
+createobject simpledude
+
+simpledude.count = 0
+simpledude.func  = easyfunc
+
+|easyfunc|
+  echo 'simpledude.count: ' simpledude.count
+||
+
+*simpledude.count -lt 100*
+  simpledude.func
+  simpledude.count = $((simpledude.count+1))
+**
+
+while : ; do
+  echo "another loop"
+  <simpledude.count -lt 90>
+    false || echo "It worked"
+    break
+  <>
+|middlefunction|
+  : && echo "Yep"
+||
+  :simpledude.count:
+    98) echo "00000 yeah" ;;
+    94) echo "Geggint there" ;;
+    *)  echo "Not sure" ;;
+  ::
+  simpledude.count=$((simpledude.count-1))
+done

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. srcobjectivebash
+
+## Example code
+# Constructor function is optionally defined
+function _constructor() {
+  v=$1
+  eval $v['one']=1
+  eval $v['two']=2
+  eval $v['func']=resultado
+}
+
+function resultado() {
+  echo "Simple results: " $*
+}
+function anotherfunc() {
+  echo "Output from another func: "
+  echo $*
+}
+
+createobject myobject
+createobject myobject2
+
+# Modify object traditionally
+myobject['one']="me"
+myobject['two']="you"
+myobject['func']=anotherfunc
+
+# Add to object (even allows spaces)
+myobject.three = "four"
+
+myobject.func myobject.two myobject.one myobject.three
+myobject2.func myobject2.two myobject2.one
+
+# Bugs
+echo 'This should not change but... myobject2.func'
+echo "This should not change but... myobject2.func"
